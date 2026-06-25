@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>캐릭터 로스터</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f5f0e8;
+    --border:   #d8d0c4;
+    --text:     #2c2418;
+    --text-mid: #6b5f4e;
+    --text-dim: #a09080;
+    --accent:   #7c5c3a;
+
+    --row-sentinel: #3a3028;
+    --row-guide:    #fdfaf5;
+
+    --grade-ss: #c0392b;
+    --grade-s:  #b8860b;
+    --grade-a:  #2471a3;
+    --grade-b:  #7d3c98;
+    --grade-c:  #1e8449;
+
+    --attr-불:    #d4502a;
+    --attr-얼음:  #2e8bb5;
+    --attr-풀:    #4caf72;
+    --attr-물:    #3a8fb5;
+    --attr-번개:  #c8a800;
+    --attr-바람:  #2e9e6a;
+    --attr-무속성:#8a8a8a;
+  }
+
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    padding: 44px 44px 28px;
+    border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: flex-end; gap: 20px;
+  }
+  .header-title { font-size: 2rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+  .header-title span { color: var(--accent); }
+  .header-count { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 3px; }
+
+  /* ── CONTROLS ── */
+  .controls {
+    padding: 14px 44px;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: rgba(245,240,232,0.96);
+    backdrop-filter: blur(10px); z-index: 10;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 160px; max-width: 220px; }
+  .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
+  input[type="text"] {
+    width: 100%; background: #fdfaf5; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 8px 12px 8px 34px; color: var(--text); font-size: 0.86rem; font-family: inherit; outline: none; transition: border-color .2s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--text-dim); }
+
+  .filter-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+  .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .divider { width: 1px; height: 26px; background: var(--border); }
+
+  .chip {
+    padding: 4px 12px; border-radius: 20px; font-size: 0.76rem; font-weight: 500;
+    border: 1.5px solid var(--border); background: #fdfaf5; color: var(--text-mid);
+    cursor: pointer; transition: all .15s; font-family: inherit; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { color: #fff; border-color: transparent; }
+
+  .chip[data-grade="ALL"].active  { background: var(--text); }
+  .chip[data-grade="SS"].active   { background: var(--grade-ss); }
+  .chip[data-grade="S"].active    { background: var(--grade-s); }
+  .chip[data-grade="A"].active    { background: var(--grade-a); }
+  .chip[data-grade="C"].active    { background: var(--grade-c); }
+
+  .chip[data-org="ALL"].active        { background: var(--text); }
+  .chip[data-org="아크프리마"].active { background: #8b2218; }
+  .chip[data-org="뱅가드1팀"].active  { background: #5a3e2b; }
+  .chip[data-org="뱅가드2팀"].active  { background: #7a4e2b; }
+  .chip[data-org="하모니서포트부"].active { background: #2b5a4a; }
+  .chip[data-org="하모니RST"].active  { background: #2b4a5a; }
+  .chip[data-org="하모니코어팀"].active { background: #4a2b5a; }
+  .chip[data-org="에이전트"].active   { background: var(--grade-a); }
+  .chip[data-org="애콜라이트"].active  { background: var(--grade-c); }
+
+
+
+  .chip[data-attr="ALL"].active     { background: var(--text); }
+  .chip[data-attr="불"].active      { background: var(--attr-불); }
+  .chip[data-attr="얼음"].active    { background: var(--attr-얼음); }
+  .chip[data-attr="풀"].active      { background: var(--attr-풀); }
+  .chip[data-attr="물"].active      { background: var(--attr-물); }
+  .chip[data-attr="번개"].active    { background: var(--attr-번개); color:#1a1200; }
+  .chip[data-attr="바람"].active    { background: var(--attr-바람); }
+  .chip[data-attr="무속성"].active  { background: var(--attr-무속성); }
+
+  .legend { display: flex; gap: 14px; align-items: center; margin-left: auto; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-dim); white-space: nowrap; }
+  .legend-swatch { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+  .legend-swatch.sentinel { background: var(--row-sentinel); }
+  .legend-swatch.guide    { background: var(--row-guide); border: 1.5px solid var(--border); }
+
+  /* ── TABLE ── */
+  .table-wrap { padding: 20px 44px 52px; }
+  .result-count { font-size: 0.74rem; color: var(--text-dim); margin-bottom: 10px; padding: 0 2px; }
+  .result-count span { color: var(--accent); font-weight: 700; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0 5px; table-layout: fixed; }
+
+  /* 컬럼 너비 */
+  td:nth-child(1), th:nth-child(1) { width: 52px; }
+  td:nth-child(2), th:nth-child(2) { width: 100px; }
+  td:nth-child(3), th:nth-child(3) { width: 110px; overflow: hidden; text-overflow: ellipsis; }
+  td:nth-child(4), th:nth-child(4) { width: 68px; }
+  td:nth-child(5), th:nth-child(5) { width: 44px; }
+  td:nth-child(6), th:nth-child(6) { width: 100px; }
+
+  thead th {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--text-dim); font-weight: 600; padding: 0 14px 6px;
+    text-align: left; cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th .sort-icon { margin-left: 3px; opacity: .35; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+  tbody tr.row-sentinel { background: var(--row-sentinel); }
+  tbody tr.row-guide    { background: var(--row-guide); box-shadow: inset 0 0 0 1px var(--border); }
+  tbody tr { border-radius: 10px; transition: filter .15s, transform .15s; }
+  tbody tr:hover { filter: brightness(1.08); transform: translateX(3px); }
+
+  td { padding: 12px 14px; font-size: 0.87rem; white-space: nowrap; }
+  td:first-child { border-radius: 10px 0 0 10px; }
+  td:last-child  { border-radius: 0 10px 10px 0; }
+
+  .row-sentinel .text-main { color: #e8dfd0; }
+  .row-sentinel .text-sub  { color: #a09080; }
+  .row-guide    .text-main { color: var(--text); }
+  .row-guide    .text-sub  { color: var(--text-mid); }
+
+  /* ── 등급 배지 ── */
+  .grade-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 20px; border-radius: 4px;
+    font-size: 0.72rem; font-weight: 800; letter-spacing: .03em;
+  }
+  /* 센티넬 행 (어두운 배경) */
+  .row-sentinel .grade-SS { background: rgba(192,57,43,.28);  color: #e88070; border: 1px solid rgba(192,57,43,.5); }
+  .row-sentinel .grade-S  { background: rgba(184,134,11,.28); color: #d4a830; border: 1px solid rgba(184,134,11,.5); }
+  .row-sentinel .grade-A  { background: rgba(36,113,163,.28); color: #6ab0e0; border: 1px solid rgba(36,113,163,.5); }
+  .row-sentinel .grade-C  { background: rgba(30,132,73,.28);  color: #60c080; border: 1px solid rgba(30,132,73,.5); }
+  /* 가이드 행 (밝은 배경) */
+  .row-guide .grade-SS { background: rgba(192,57,43,.12);  color: var(--grade-ss); border: 1px solid rgba(192,57,43,.3); }
+  .row-guide .grade-S  { background: rgba(184,134,11,.12); color: var(--grade-s);  border: 1px solid rgba(184,134,11,.3); }
+  .row-guide .grade-A  { background: rgba(36,113,163,.12); color: var(--grade-a);  border: 1px solid rgba(36,113,163,.3); }
+  .row-guide .grade-C  { background: rgba(30,132,73,.12);  color: var(--grade-c);  border: 1px solid rgba(30,132,73,.3); }
+
+  /* ── 소속 태그 ── */
+  .org-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: .02em;
+  }
+
+  /* 소속별 — 진한 배경 + 흰 글씨 (어느 행에서도 잘 보임) */
+  .org-아크프리마      { background: #8b2218; color: #ffd0c8; }
+  .org-뱅가드1팀       { background: #5c3a1e; color: #f0d8b8; }
+  .org-뱅가드2팀       { background: #7a4820; color: #f5ddb0; }
+  .org-하모니서포트부  { background: #1a5c42; color: #a8f0d0; }
+  .org-하모니RST       { background: #1a3d5c; color: #a0d4f0; }
+  .org-하모니코어팀    { background: #3d1a5c; color: #d0a8f0; }
+  .org-에이전트        { background: #1a3070; color: #a8c4f8; }
+  .org-애콜라이트      { background: #1a5c1a; color: #a8f0a8; }
+
+  /* ── 속성 도트 ── */
+  .attr-dot { display: inline-flex; align-items: center; gap: 7px; font-size: 0.83rem; font-weight: 500; }
+  .attr-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .attr-불::before    { background: var(--attr-불);    box-shadow: 0 0 5px rgba(212,80,42,.6); }
+  .attr-얼음::before  { background: var(--attr-얼음);  box-shadow: 0 0 5px rgba(46,139,181,.6); }
+  .attr-풀::before    { background: var(--attr-풀);    box-shadow: 0 0 5px rgba(76,175,114,.6); }
+  .attr-물::before    { background: var(--attr-물);    box-shadow: 0 0 5px rgba(58,143,181,.6); }
+  .attr-번개::before  { background: var(--attr-번개);  box-shadow: 0 0 5px rgba(200,168,0,.6); }
+  .attr-바람::before  { background: var(--attr-바람);  box-shadow: 0 0 5px rgba(46,158,106,.6); }
+  .attr-무속성::before { background: var(--attr-무속성); }
+
+  /* ── 키 ── */
+  .height-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .height-val { font-variant-numeric: tabular-nums; font-size: 0.84rem; min-width: 42px; }
+  .height-bar { width: 52px; height: 3px; background: rgba(255,255,255,.15); border-radius: 2px; overflow: hidden; }
+  .row-guide .height-bar { background: rgba(0,0,0,.1); }
+  .height-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; opacity: .7; }
+  .row-sentinel .height-bar-fill { background: #c8bfb0; }
+
+  .empty-row td { text-align: center; padding: 56px; color: var(--text-dim); font-size: 0.88rem; }
+
+  @media (max-width: 760px) {
+    header, .controls, .table-wrap { padding-left: 16px; padding-right: 16px; }
+    .header-title { font-size: 1.5rem; }
+    td { padding: 10px 9px; font-size: 0.78rem; }
+    .height-bar { display: none; }
+    .legend { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">캐릭터 <span>로스터</span></div>
+    <div class="header-count" id="headerCount"></div>
+  </div>
+</header>
+
+<div class="controls">
+  <!-- 검색 -->
+  <div class="search-wrap">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+    <input type="text" id="searchInput" placeholder="이름 검색…">
+  </div>
+
+  <div class="divider"></div>
+  <span class="filter-label">등급</span>
+  <div class="filter-group" id="gradeFilter">
+    <button class="chip active" data-grade="ALL">전체</button>
+    <button class="chip" data-grade="SS">SS</button>
+    <button class="chip" data-grade="S">S</button>
+    <button class="chip" data-grade="A">A</button>
+    <button class="chip" data-grade="C">C</button>
+  </div>
+
+  <div class="divider"></div>
+  <span class="filter-label">소속</span>
+  <div class="filter-group" id="orgFilter">
+    <button class="chip active" data-org="ALL">전체</button>
+    <button class="chip" data-org="아크프리마">아크프리마</button>
+    <button class="chip" data-org="뱅가드1팀">뱅가드 1팀</button>
+    <button class="chip" data-org="뱅가드2팀">뱅가드 2팀</button>
+    <button class="chip" data-org="하모니서포트부">하모니 서포트부</button>
+    <button class="chip" data-org="하모니RST">하모니 R.S.T.</button>
+    <button class="chip" data-org="하모니코어팀">하모니 코어팀</button>
+    <button class="chip" data-org="에이전트">에이전트</button>
+    <button class="chip" data-org="애콜라이트">애콜라이트</button>
+  </div>
+
+  <div class="divider"></div>
+  <span class="filter-label">속성</span>
+  <div class="filter-group" id="attrFilter">
+    <button class="chip active" data-attr="ALL">전체</button>
+    <button class="chip" data-attr="불">🔥 불</button>
+    <button class="chip" data-attr="얼음">❄️ 얼음</button>
+    <button class="chip" data-attr="물">💧 물</button>
+    <button class="chip" data-attr="바람">🌀 바람</button>
+    <button class="chip" data-attr="번개">⚡ 번개</button>
+    <button class="chip" data-attr="풀">🌿 풀</button>
+    <button class="chip" data-attr="무속성">○ 무속성</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch sentinel"></div>센티넬</div>
+    <div class="legend-item"><div class="legend-swatch guide"></div>가이드</div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="result-count" id="resultCount"></div>
+  <table>
+    <thead>
+      <tr>
+        <th data-sort="grade">등급 <span class="sort-icon">↕</span></th>
+        <th data-sort="name">이름 <span class="sort-icon">↕</span></th>
+        <th data-sort="org">소속 <span class="sort-icon">↕</span></th>
+        <th data-sort="attr">속성 <span class="sort-icon">↕</span></th>
+        <th data-sort="age">나이 <span class="sort-icon">↕</span></th>
+        <th data-sort="height">키 <span class="sort-icon">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+const CHARACTERS = [
+  { grade:"SS", name:"헬리오스",   role:"센티넬", org:"아크프리마", attr:"불",    age:38, height:191.2 },
+  { grade:"SS", name:"해일",       role:"센티넬", org:"아크프리마", attr:"물",    age:28, height:188   },
+  { grade:"SS", name:"이카로스",   role:"센티넬", org:"아크프리마", attr:"바람",  age:32, height:179   },
+  { grade:"SS", name:"산타",       role:"센티넬", org:"아크프리마", attr:"얼음",  age:35, height:189   },
+
+  { grade:"S",  name:"애쉬",       role:"센티넬", org:"뱅가드1팀", attr:"불",    age:20, height:181   },
+  { grade:"S",  name:"셰인",       role:"센티넬", org:"뱅가드1팀", attr:"바람",  age:27, height:183   },
+  { grade:"S",  name:"오버로드",   role:"센티넬", org:"뱅가드1팀", attr:"번개",  age:23, height:189   },
+  { grade:"S",  name:"아모레",     role:"센티넬", org:"뱅가드1팀", attr:"불",    age:28, height:188   },
+  { grade:"S",  name:"노아",       role:"센티넬", org:"뱅가드1팀", attr:"물",    age:29, height:180   },
+  { grade:"S",  name:"라임",       role:"센티넬", org:"뱅가드1팀", attr:"얼음",  age:24, height:160   },
+
+  { grade:"S",  name:"바이브",     role:"센티넬", org:"뱅가드2팀", attr:"바람",  age:22, height:182   },
+  { grade:"S",  name:"리암",       role:"센티넬", org:"뱅가드2팀", attr:"얼음",  age:24, height:186   },
+  { grade:"S",  name:"신드롬",     role:"센티넬", org:"뱅가드2팀", attr:"불",    age:27, height:187   },
+
+  { grade:"S",  name:"윈터",       role:"가이드", org:"하모니서포트부", attr:"얼음",  age:20, height:177   },
+  { grade:"S",  name:"오아시스",   role:"가이드", org:"하모니서포트부", attr:"물",    age:21, height:160   },
+  { grade:"S",  name:"스트레이",   role:"가이드", org:"하모니서포트부", attr:"번개",  age:27, height:187   },
+  { grade:"S",  name:"페더",       role:"가이드", org:"하모니서포트부", attr:"바람",  age:29, height:186   },
+  { grade:"S",  name:"자이안",     role:"가이드", org:"하모니서포트부", attr:"풀",    age:38, height:190   },
+  { grade:"C",  name:"코드",       role:"가이드", org:"하모니서포트부", attr:"무속성",age:25, height:185.5 },
+
+  { grade:"S",  name:"휴고",       role:"가이드", org:"하모니RST", attr:"불",    age:26, height:183   },
+  { grade:"S",  name:"에덴",       role:"가이드", org:"하모니RST", attr:"바람",  age:28, height:183   },
+  { grade:"S",  name:"카르마",     role:"가이드", org:"하모니RST", attr:"번개",  age:32, height:190   },
+  { grade:"S",  name:"저스티스",   role:"가이드", org:"하모니RST", attr:"물",    age:42, height:189.7 },
+
+  { grade:"S",  name:"밴스",       role:"가이드", org:"하모니코어팀", attr:"불",  age:35, height:186   },
+  { grade:"A",  name:"퓨어",       role:"가이드", org:"하모니코어팀", attr:"무속성",age:30, height:175 },
+
+  { grade:"A",  name:"루비",       role:"센티넬", org:"에이전트",  attr:"불",    age:23, height:170   },
+  { grade:"A",  name:"샤드",       role:"센티넬", org:"에이전트",  attr:"얼음",  age:23, height:185   },
+  { grade:"A",  name:"카토",       role:"센티넬", org:"에이전트",  attr:"물",    age:26, height:176.6 },
+
+  { grade:"C",  name:"피카",       role:"센티넬", org:"애콜라이트",attr:"번개",  age:21, height:158   },
+  { grade:"C",  name:"블루",       role:"센티넬", org:"애콜라이트",attr:"물",    age:28, height:187   },
+];
+
+const GRADE_ORDER = {SS:0, S:1, A:2, B:3, C:4};
+const ORG_ORDER = {"아크프리마":0,"뱅가드1팀":1,"뱅가드2팀":2,"하모니서포트부":3,"하모니RST":4,"하모니코어팀":5,"에이전트":6,"애콜라이트":7};
+const ORG_LABEL = {
+  "아크프리마":"아크프리마",
+  "뱅가드1팀":"뱅가드 1팀",
+  "뱅가드2팀":"뱅가드 2팀",
+  "하모니서포트부":"하모니 서포트부",
+  "하모니RST":"하모니 R.S.T.",
+  "하모니코어팀":"하모니 코어팀",
+  "에이전트":"에이전트",
+  "애콜라이트":"애콜라이트"
+};
+const MIN_H = 155, MAX_H = 195;
+
+let sortKey = 'grade', sortAsc = true;
+let filterGrade = 'ALL', filterOrg = 'ALL', filterAttr = 'ALL', searchQ = '';
+
+function getFiltered() {
+  return CHARACTERS.filter(c => {
+    if (filterGrade !== 'ALL' && c.grade !== filterGrade) return false;
+    if (filterOrg   !== 'ALL' && c.org   !== filterOrg)  return false;
+    if (filterAttr  !== 'ALL' && c.attr  !== filterAttr)  return false;
+    if (searchQ && !c.name.includes(searchQ)) return false;
+    return true;
+  }).sort((a, b) => {
+    let va, vb;
+    if      (sortKey === 'grade')  { va = GRADE_ORDER[a.grade]; vb = GRADE_ORDER[b.grade]; }
+    else if (sortKey === 'name')   { va = a.name;   vb = b.name; }
+    else if (sortKey === 'org')    { va = ORG_ORDER[a.org]; vb = ORG_ORDER[b.org]; }
+    else if (sortKey === 'attr')   { va = a.attr;   vb = b.attr; }
+    else if (sortKey === 'age')    { va = a.age;    vb = b.age; }
+    else if (sortKey === 'height') { va = a.height; vb = b.height; }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ?  1 : -1;
+    return 0;
+  });
+}
+
+function render() {
+  const data = getFiltered();
+  document.getElementById('headerCount').textContent = `총 ${CHARACTERS.length}명`;
+  document.getElementById('resultCount').innerHTML = `<span>${data.length}</span>명의 캐릭터`;
+
+  const tbody = document.getElementById('tableBody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">조건에 맞는 캐릭터가 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const pct = Math.round(((c.height - MIN_H) / (MAX_H - MIN_H)) * 100);
+    const rowCls = c.role === '센티넬' ? 'row-sentinel' : 'row-guide';
+    const orgKey = c.org.replace(/\s/g,'');
+    return `
+    <tr class="${rowCls}">
+      <td><span class="grade-badge grade-${c.grade}">${c.grade}</span></td>
+      <td class="text-main" style="font-weight:700;font-size:.92rem">${c.name}</td>
+      <td><span class="org-tag org-${orgKey}">${ORG_LABEL[c.org]}</span></td>
+      <td><span class="attr-dot attr-${c.attr} text-sub">${c.attr}</span></td>
+      <td class="text-sub">${c.age}</td>
+      <td>
+        <div class="height-bar-wrap">
+          <span class="height-val text-sub">${c.height}</span>
+          <div class="height-bar"><div class="height-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (sortKey === key) sortAsc = !sortAsc;
+    else { sortKey = key; sortAsc = true; }
+    document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+    th.classList.add('sorted');
+    th.querySelector('.sort-icon').textContent = sortAsc ? '↑' : '↓';
+    render();
+  });
+});
+
+document.getElementById('gradeFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.chip[data-grade]');
+  if (!btn) return;
+  document.querySelectorAll('#gradeFilter .chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterGrade = btn.dataset.grade;
+  render();
+});
+
+document.getElementById('orgFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.chip[data-org]');
+  if (!btn) return;
+  document.querySelectorAll('#orgFilter .chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterOrg = btn.dataset.org;
+  render();
+});
+
+document.getElementById('attrFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.chip[data-attr]');
+  if (!btn) return;
+  document.querySelectorAll('#attrFilter .chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterAttr = btn.dataset.attr;
+  render();
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQ = e.target.value.trim();
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
