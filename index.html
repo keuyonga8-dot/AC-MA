@@ -27,11 +27,11 @@
     --grade-c:  #1e8449;
 
     --attr-불:    #d4502a;
-    --attr-얼음:  #2e8bb5;
-    --attr-풀:    #4caf72;
-    --attr-물:    #3a8fb5;
+    --attr-얼음:  #5ab8e8;   /* 하늘색 */
+    --attr-풀:    #7ed44a;   /* 연두 초록 */
+    --attr-물:    #2872c8;   /* 진한 파랑 */
     --attr-번개:  #c8a800;
-    --attr-바람:  #2e9e6a;
+    --attr-바람:  #2ec4a8;   /* 민트 (초록+파랑 사이) */
     --attr-무속성:#8a8a8a;
   }
 
@@ -96,11 +96,11 @@
 
   .chip[data-attr="ALL"].active     { background: var(--text); }
   .chip[data-attr="불"].active      { background: var(--attr-불); }
-  .chip[data-attr="얼음"].active    { background: var(--attr-얼음); }
-  .chip[data-attr="풀"].active      { background: var(--attr-풀); }
+  .chip[data-attr="얼음"].active    { background: var(--attr-얼음); color:#001828; }
+  .chip[data-attr="풀"].active      { background: var(--attr-풀); color:#0e2000; }
   .chip[data-attr="물"].active      { background: var(--attr-물); }
   .chip[data-attr="번개"].active    { background: var(--attr-번개); color:#1a1200; }
-  .chip[data-attr="바람"].active    { background: var(--attr-바람); }
+  .chip[data-attr="바람"].active    { background: var(--attr-바람); color:#001a18; }
   .chip[data-attr="무속성"].active  { background: var(--attr-무속성); }
 
   .legend { display: flex; gap: 14px; align-items: center; margin-left: auto; }
@@ -206,7 +206,101 @@
 
   .empty-row td { text-align: center; padding: 56px; color: var(--text-dim); font-size: 0.88rem; }
 
-  @media (max-width: 760px) {
+  /* ── 캐릭터 팝업 모달 ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,8,4,.7);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    border-radius: 18px;
+    width: 440px;
+    max-width: 92vw;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,.7);
+    animation: modalIn .22s cubic-bezier(.34,1.3,.64,1);
+    /* 배경은 JS로 속성별 동적 설정 */
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform: scale(.9) translateY(12px); }
+    to   { opacity:1; transform: scale(1)  translateY(0); }
+  }
+
+  /* 속성별 모달 테마 */
+  /* 불 — 깊은 적흑 + 오렌지레드 */
+  .modal[data-attr="불"]    { background: linear-gradient(145deg, #2e0800, #180400); border: 1px solid #8b2800; --m-accent:#ff6030; --m-quote:#ffaa70; --m-dim:#a04020; --m-card:rgba(255,80,30,.1); --m-card-border:rgba(255,80,30,.28); }
+  /* 물 — 짙은 네이비 + 코발트블루 */
+  .modal[data-attr="물"]    { background: linear-gradient(145deg, #00081e, #000410); border: 1px solid #0a2580; --m-accent:#4878f0; --m-quote:#88b0ff; --m-dim:#2848b0; --m-card:rgba(40,90,240,.1); --m-card-border:rgba(40,90,240,.28); }
+  /* 얼음 — 차갑고 밝은 하늘색 계열 */
+  .modal[data-attr="얼음"]  { background: linear-gradient(145deg, #001828, #000d1a); border: 1px solid #1878a8; --m-accent:#60d8ff; --m-quote:#c0f0ff; --m-dim:#3098b8; --m-card:rgba(80,210,255,.08); --m-card-border:rgba(80,210,255,.25); }
+  /* 바람 — 어두운 청록 민트 */
+  .modal[data-attr="바람"]  { background: linear-gradient(145deg, #001a16, #000d0b); border: 1px solid #0a5848; --m-accent:#20e0b8; --m-quote:#70fce0; --m-dim:#109878; --m-card:rgba(20,210,170,.08); --m-card-border:rgba(20,210,170,.25); }
+  /* 풀 — 어두운 황록 */
+  .modal[data-attr="풀"]    { background: linear-gradient(145deg, #101e00, #080f00); border: 1px solid #386800; --m-accent:#98e030; --m-quote:#c8f870; --m-dim:#689010; --m-card:rgba(140,220,30,.08); --m-card-border:rgba(140,220,30,.25); }
+  /* 번개 — 어두운 황갈 + 노랑 */
+  .modal[data-attr="번개"]  { background: linear-gradient(145deg, #1c1600, #0e0b00); border: 1px solid #686000; --m-accent:#f8d020; --m-quote:#ffee80; --m-dim:#b89010; --m-card:rgba(240,190,0,.08); --m-card-border:rgba(240,190,0,.25); }
+  /* 무속성 — 차갑고 무채색 */
+  .modal[data-attr="무속성"]{ background: linear-gradient(145deg, #141414, #090909); border: 1px solid #484848; --m-accent:#d8d8d8; --m-quote:#f4f4f4; --m-dim:#909090; --m-card:rgba(210,210,210,.07); --m-card-border:rgba(210,210,210,.2); }
+
+  .modal-header {
+    padding: 28px 28px 20px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .modal-header-left { display: flex; flex-direction: column; gap: 10px; }
+  .modal-name {
+    font-size: 1.7rem; font-weight: 900;
+    letter-spacing: -.03em;
+    color: var(--m-accent);
+    text-shadow: 0 0 30px currentColor;
+  }
+  .modal-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .modal-close {
+    background: rgba(255,255,255,.07); border: none; cursor: pointer;
+    color: rgba(255,255,255,.4); font-size: 1rem; line-height: 1;
+    padding: 6px 9px; border-radius: 8px; transition: all .15s; flex-shrink: 0;
+  }
+  .modal-close:hover { color: #fff; background: rgba(255,255,255,.15); }
+
+  .modal-body { padding: 22px 28px 28px; display: flex; flex-direction: column; gap: 18px; }
+
+  .modal-quote {
+    font-size: 1.05rem; font-weight: 600; font-style: italic;
+    color: var(--m-quote);
+    line-height: 1.65;
+    padding-left: 16px;
+    border-left: 3px solid var(--m-accent);
+  }
+
+  .modal-catchphrase-label {
+    font-size: 0.66rem; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--m-dim); margin-bottom: 8px;
+  }
+  .modal-catchphrase {
+    font-size: 0.87rem; color: rgba(255,255,255,.65); line-height: 1.75;
+    background: var(--m-card);
+    border: 1px solid var(--m-card-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  /* 모달 안 배지 */
+  .modal .grade-badge { font-size: 0.76rem; }
+  .modal .grade-badge.grade-SS { background: rgba(220,60,40,.3);  color: #ff9080; border-color: rgba(220,60,40,.6); }
+  .modal .grade-badge.grade-S  { background: rgba(200,150,10,.3); color: #ffd050; border-color: rgba(200,150,10,.6); }
+  .modal .grade-badge.grade-A  { background: rgba(50,120,210,.3); color: #80c0ff; border-color: rgba(50,120,210,.6); }
+  .modal .grade-badge.grade-C  { background: rgba(60,180,80,.3);  color: #80f0a0; border-color: rgba(60,180,80,.6); }
+  .modal .attr-dot { color: var(--m-accent); }
+
+  tbody tr.has-profile { cursor: pointer; }
+
     header, .controls, .table-wrap { padding-left: 16px; padding-right: 16px; }
     .header-title { font-size: 1.5rem; }
     td { padding: 10px 9px; font-size: 0.78rem; }
@@ -293,45 +387,125 @@
   </table>
 </div>
 
+<!-- ── 캐릭터 프로필 모달 ── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-name" id="modalName"></div>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-quote" id="modalQuote"></div>
+      <div>
+        <div class="modal-catchphrase-label">캐치프라이즈</div>
+        <div class="modal-catchphrase" id="modalCatchphrase"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const CHARACTERS = [
-  { grade:"SS", name:"헬리오스",   role:"센티넬", org:"아크프리마", attr:"불",    age:38, height:191.2 },
-  { grade:"SS", name:"해일",       role:"센티넬", org:"아크프리마", attr:"물",    age:28, height:188   },
-  { grade:"SS", name:"이카로스",   role:"센티넬", org:"아크프리마", attr:"바람",  age:32, height:179   },
-  { grade:"SS", name:"산타",       role:"센티넬", org:"아크프리마", attr:"얼음",  age:35, height:189   },
+  { grade:"SS", name:"헬리오스",   role:"센티넬", org:"아크프리마", attr:"불",    age:38, height:191.2,
+    quote: "태양 아래서, 포기는 허락되지 않지.",
+    catchphrase: "정의를 위해 모든 것을 불태우는, 태양의 화신." },
+  { grade:"SS", name:"해일",       role:"센티넬", org:"아크프리마", attr:"물",    age:28, height:188,
+    quote: "…이게 너희의 최선인가. ARCH의 수치로군.",
+    catchphrase: "물의 속성을 지배하는 살아있는 재앙." },
+  { grade:"SS", name:"이카로스",   role:"센티넬", org:"아크프리마", attr:"바람",  age:32, height:179,
+    quote: "방금 건... 우리 둘만의 비밀이에요.",
+    catchphrase: "가장 자비로운 얼굴을 한, 하늘의 폭군." },
+  { grade:"SS", name:"산타",       role:"센티넬", org:"아크프리마", attr:"얼음",  age:35, height:189,
+    quote: "울지 마, 꼴 보기 싫으니까.",
+    catchphrase: "가장 뜨거운 심장을 지닌, 절대 영도의 지배자." },
 
-  { grade:"S",  name:"애쉬",       role:"센티넬", org:"뱅가드1팀", attr:"불",    age:20, height:181   },
-  { grade:"S",  name:"셰인",       role:"센티넬", org:"뱅가드1팀", attr:"바람",  age:27, height:183   },
-  { grade:"S",  name:"오버로드",   role:"센티넬", org:"뱅가드1팀", attr:"번개",  age:23, height:189   },
-  { grade:"S",  name:"아모레",     role:"센티넬", org:"뱅가드1팀", attr:"불",    age:28, height:188   },
-  { grade:"S",  name:"노아",       role:"센티넬", org:"뱅가드1팀", attr:"물",    age:29, height:180   },
-  { grade:"S",  name:"라임",       role:"센티넬", org:"뱅가드1팀", attr:"얼음",  age:24, height:160   },
+  { grade:"S",  name:"애쉬",       role:"센티넬", org:"뱅가드1팀", attr:"불",    age:20, height:181,
+    quote: "...가까이 오면 지져버린다.",
+    catchphrase: "통제 불능의 불꽃, 걸어 다니는 재앙. 코드네임 '애쉬'는 단순한 센티넬이 아닌, 하나의 자연재해로 분류된다. 그의 분노가 향하는 곳에는 오직 잿더미만이 남는다." },
+  { grade:"S",  name:"셰인",       role:"센티넬", org:"뱅가드1팀", attr:"바람",  age:27, height:183,
+    quote: "재밌는 얘기 없어요? 이를테면 야한 얘기?",
+    catchphrase: "자유로운 바람, 예측 불가능한 폭풍. 코드네임 '셰인'은 전장을 지배하는 변덕스러운 지휘자다. 그의 미소가 향하는 곳에는 언제나 거친 바람이 몰아친다." },
+  { grade:"S",  name:"오버로드",   role:"센티넬", org:"뱅가드1팀", attr:"번개",  age:23, height:189,
+    quote: "감당할 수 있겠어? 엄청 자극적일 텐데.",
+    catchphrase: "경고. 코드네임 '오버로드'에게 접근하는 것은 전선을 혀로 핥는 것과 같다. 짜릿하지만, 그 끝은 장담할 수 없다." },
+  { grade:"S",  name:"아모레",     role:"센티넬", org:"뱅가드1팀", attr:"풀",    age:28, height:188,
+    quote: "시뇨라가 많은 곳이라면, 거긴 천국이지.",
+    catchphrase: "사랑은 꽃처럼 피지만, 독처럼 번진다. 코드네임 '아모레'. 그의 장미는 언제나 향기와 상처를 동시에 남긴다." },
+  { grade:"S",  name:"노아",       role:"센티넬", org:"뱅가드1팀", attr:"물",    age:29, height:180,
+    quote: "…그냥, 어디 가지 말고 내 옆에만 있어요.",
+    catchphrase: "고요한 바다는 모든 것을 삼키지만, 그 깊은 곳에는 가장 아픈 눈물이 잠들어 있다. 코드네임 '노아'. 그는 ARCH의 가장 신뢰받는 방패였고, 이제는 가장 위태로운 영웅이다." },
+  { grade:"S",  name:"라임",       role:"센티넬", org:"뱅가드1팀", attr:"얼음",  age:24, height:160,
+    quote: "맥박 정상. 체온... 따뜻해 보여. 나쁘지 않네, 너.",
+    catchphrase: "온도는 낮을수록 칼날이 되고, 감정은 비울수록 완벽해진다. 코드네임 '라임'. 그녀의 냉기는, 흔적 없이 목숨을 지운다." },
 
-  { grade:"S",  name:"바이브",     role:"센티넬", org:"뱅가드2팀", attr:"바람",  age:22, height:182   },
-  { grade:"S",  name:"리암",       role:"센티넬", org:"뱅가드2팀", attr:"얼음",  age:24, height:186   },
-  { grade:"S",  name:"신드롬",     role:"센티넬", org:"뱅가드2팀", attr:"불",    age:27, height:187   },
+  { grade:"S",  name:"바이브",     role:"센티넬", org:"뱅가드2팀", attr:"바람",  age:22, height:182,
+    quote: "...됐다, 니랑은 상관없는 일이다.",
+    catchphrase: "길들지 않은 바람, 섬세한 감각이 빚어낸 무음의 폭풍. 코드네임 '바이브'. 그가 흐름(Flow)을 읽는 순간 세계는 조용히 갈라진다." },
+  { grade:"S",  name:"리암",       role:"센티넬", org:"뱅가드2팀", attr:"얼음",  age:24, height:186,
+    quote: "...................",
+    catchphrase: "그의 하얀 침묵 속, 퇴로는 존재하지 않는다. 코드네임 '리암'. 그가 세운 빙벽 앞에서, 모든 전의는 하얗게 얼어붙는다." },
+  { grade:"S",  name:"신드롬",     role:"센티넬", org:"뱅가드2팀", attr:"불",    age:27, height:187,
+    quote: "씨발.... 존나 맘에 안 들게 생겼네.",
+    catchphrase: "가장 높은 곳에서 추락하여, 가장 뜨거운 곳에서 눈을 떴다. 코드네임 신드롬. 잿더미 위에서 타오르는 그의 분노는, 세상을 향한 가장 화려하고 무례한 해방선언이다." },
 
-  { grade:"S",  name:"윈터",       role:"가이드", org:"하모니서포트부", attr:"얼음",  age:20, height:177   },
-  { grade:"S",  name:"오아시스",   role:"가이드", org:"하모니서포트부", attr:"물",    age:21, height:160   },
-  { grade:"S",  name:"스트레이",   role:"가이드", org:"하모니서포트부", attr:"번개",  age:27, height:187   },
-  { grade:"S",  name:"페더",       role:"가이드", org:"하모니서포트부", attr:"바람",  age:29, height:186   },
-  { grade:"S",  name:"자이안",     role:"가이드", org:"하모니서포트부", attr:"풀",    age:38, height:190   },
-  { grade:"C",  name:"코드",       role:"가이드", org:"하모니서포트부", attr:"무속성",age:25, height:185.5 },
+  { grade:"S",  name:"윈터",       role:"가이드", org:"하모니서포트부", attr:"얼음",  age:20, height:177,
+    quote: "...어차피 할 거면, 빨리 끝내죠. 귀찮은데.",
+    catchphrase: "서리 같은 무심함은 절대적인 보호를 위한 최적의 값이다. 나른한 수호자, 코드네임 '윈터'. 그의 단 하나의 변수, 그것은 당신이다." },
+  { grade:"S",  name:"오아시스",   role:"가이드", org:"하모니서포트부", attr:"물",    age:21, height:160,
+    quote: "일단.. 키스부터 시작할까요?",
+    catchphrase: "ARCH 내 모든 센티넬의 선망의 대상. 그녀의 존재 자체가 팀의 생존율을 극적으로 끌어올리는 '걸어 다니는 의무실'입니다." },
+  { grade:"S",  name:"스트레이",   role:"가이드", org:"하모니서포트부", attr:"번개",  age:27, height:187,
+    quote: "하여간 센티넬 새끼들 존나게 시끄럽네.",
+    catchphrase: "그의 모든 거친 행동과 말은, 당신의 존재 자체에 대한 거부이자 시험입니다. 코드네임 '스트레이'는 길들여지지 않은 야수이자, ARCH의 가장 위험한 변수입니다." },
+  { grade:"S",  name:"페더",       role:"가이드", org:"하모니서포트부", attr:"바람",  age:29, height:186,
+    quote: "자, 이리 와.",
+    catchphrase: "가장 높이 날아오른 자들 곁엔 늘 그의 바람이 머물렀다. 코드네임 '페더'. 가장 이상적인 구원이자, 끝내 붙잡을 수 없는 바람." },
+  { grade:"S",  name:"자이안",     role:"가이드", org:"하모니서포트부", attr:"풀",    age:38, height:190,
+    quote: "어이, 새싹. 진도가 너무 빠른 거 아냐?",
+    catchphrase: "가장 단단한 뿌리는 가장 부드러운 흙을 감싸 안는다. 코드네임 '자이안'은 걸어 다니는 숲이자, ARCH의 살아있는 심장입니다." },
+  { grade:"C",  name:"코드",       role:"가이드", org:"하모니서포트부", attr:"무속성",age:25, height:185.5,
+    quote: "님아 gg여~",
+    catchphrase: "복잡한 비애는 반품, 해결은 최신 패치처럼 깔끔하게. 코드네임 '코드'. 가장 버릇없는 신입이 선사하는, 가장 결점 없는 최적화 상태. 그는 ARCH의 낡은 룰을 비웃는 가장 유례없는 변수다." },
 
-  { grade:"S",  name:"휴고",       role:"가이드", org:"하모니RST", attr:"불",    age:26, height:183   },
-  { grade:"S",  name:"에덴",       role:"가이드", org:"하모니RST", attr:"바람",  age:28, height:183   },
-  { grade:"S",  name:"카르마",     role:"가이드", org:"하모니RST", attr:"번개",  age:32, height:190   },
-  { grade:"S",  name:"저스티스",   role:"가이드", org:"하모니RST", attr:"물",    age:42, height:189.7 },
+  { grade:"S",  name:"휴고",       role:"가이드", org:"하모니RST", attr:"불",    age:26, height:183,
+    quote: "말 조심해요, 대가리 깨버리기 전에.",
+    catchphrase: "구원은 선불, 자비는 사치. 코드네임 '휴고'. 가장 차가운 눈으로, 가장 뜨거운 살의(殺意)를 장전한다." },
+  { grade:"S",  name:"에덴",       role:"가이드", org:"하모니RST", attr:"바람",  age:28, height:183,
+    quote: "하아... 꺼져, 제발...",
+    catchphrase: "그의 한숨은 차가운 바람이 되고, 그의 총알은 바람을 가른다. 코드네임 '에덴'. 권태에 잠식된 명사수, 당신이라는 족쇄에 묶이다." },
+  { grade:"S",  name:"카르마",     role:"가이드", org:"하모니RST", attr:"번개",  age:32, height:190,
+    quote: "네 죄를 고해봐, 이 몸께서 친히 네 몸으로 들어줄 테니.",
+    catchphrase: "모든 죄는 대가를 치른다. 어둠의 밑바닥에서 쏘아 올린 벼락, 코드네임 '카르마'. 그의 손끝의 뇌전은 자비 없는 구원이자, 벗어날 수 없는 굴레다." },
+  { grade:"S",  name:"저스티스",   role:"가이드", org:"하모니RST", attr:"물",    age:42, height:189.7,
+    quote: "어른이 묻잖아. 대답해야지?",
+    catchphrase: "참극인가, 비극인가. 죄는 물속에 잠기고, 구원은 구속 끝에 증명된다. 차가운 정의. 코드네임 '저스티스'. 당신의 손목에 걸린 질서의 무게가 진실을 가릴 때까지, 그는 현장을 떠나지 않는다." },
 
-  { grade:"S",  name:"밴스",       role:"가이드", org:"하모니코어팀", attr:"불",  age:35, height:186   },
-  { grade:"A",  name:"퓨어",       role:"가이드", org:"하모니코어팀", attr:"무속성",age:30, height:175 },
+  { grade:"S",  name:"밴스",       role:"가이드", org:"하모니코어팀", attr:"풀",  age:35, height:186,
+    quote: "방금 그 말, 책임질 수 있습니까?",
+    catchphrase: "기록되지 않은 진실은 없다. 영웅들의 생명과 데이터를 관할하는 하모니 부서의 책임자, 코드네임 '닥터 밴스'. 당신의 과거와 미래는 오직 그의 손바닥 위에서 결정된다." },
+  { grade:"A",  name:"퓨어",       role:"가이드", org:"하모니코어팀", attr:"무속성",age:30, height:175,
+    quote: "또 왔어? 내가 그렇게 좋아?",
+    catchphrase: "가장 순수한 존재가 선사하는, 가장 완벽한 구원. 의무실의 전담 가이드, 코드네임 '퓨어'. 그의 눈빛은 무구함을, 그의 손길은 안식을 머금는다." },
 
-  { grade:"A",  name:"루비",       role:"센티넬", org:"에이전트",  attr:"불",    age:23, height:170   },
-  { grade:"A",  name:"샤드",       role:"센티넬", org:"에이전트",  attr:"얼음",  age:23, height:185   },
-  { grade:"A",  name:"카토",       role:"센티넬", org:"에이전트",  attr:"물",    age:26, height:176.6 },
+  { grade:"A",  name:"루비",       role:"센티넬", org:"에이전트",  attr:"불",    age:23, height:170,
+    quote: "봐, 이 루비님이 지배하는 전장을!",
+    catchphrase: "무례할 정도로 뜨겁고, 치명적일 만큼 아름답다. 코드네임 '루비'. 여왕의 행차에 자비란 없다, 그녀가 걷는 길은 곧 불타는 길이 된다." },
+  { grade:"A",  name:"샤드",       role:"센티넬", org:"에이전트",  attr:"얼음",  age:23, height:185,
+    quote: "빠져있으십쇼. 방해됩니다.",
+    catchphrase: "가장 차가운 칼날은, 가장 뜨거운 노력을 숨긴다. 코드네임 '샤드'. 그의 침묵은 오만이 아닌, 스스로를 깎아내 온 시간의 증거다." },
+  { grade:"A",  name:"카토",       role:"센티넬", org:"에이전트",  attr:"풀",    age:26, height:176.6,
+    quote: "뭐해? …나 졸린데..... 안아줘요....",
+    catchphrase: "가장 날카로운 가시는 가장 깊은 잠을 자기 위해 피어난다. 코드네임 '카토'. 그의 나태는 이제, 당신만이 깨울 수 있는 검이다." },
 
-  { grade:"C",  name:"피카",       role:"센티넬", org:"애콜라이트",attr:"번개",  age:21, height:158   },
-  { grade:"C",  name:"블루",       role:"센티넬", org:"애콜라이트",attr:"물",    age:28, height:187   },
+  { grade:"C",  name:"피카",       role:"센티넬", org:"애콜라이트",attr:"번개",  age:21, height:158,
+    quote: "꺄악! 죄, 죄송합니다! 다치신 곳은 없으세요?!",
+    catchphrase: "의욕은 S급, 실전은 C급! 코드네임 '피카'는 아군인지 적군인지 구별할 수 없는, ARCH의 가장 사랑스러운 시한폭탄이다." },
+  { grade:"C",  name:"블루",       role:"센티넬", org:"애콜라이트",attr:"물",    age:28, height:187,
+    quote: "선배님 말이라면, 뭐든요.",
+    catchphrase: "파도는 늘 낮은 곳에서 시작된다. 코드네임 '블루'. 그의 맑고 깊은 눈동자엔, 아직 꺼지지 않은 꿈이 담겨 있다." },
 ];
 
 const GRADE_ORDER = {SS:0, S:1, A:2, B:3, C:4};
@@ -386,8 +560,9 @@ function render() {
     const pct = Math.round(((c.height - MIN_H) / (MAX_H - MIN_H)) * 100);
     const rowCls = c.role === '센티넬' ? 'row-sentinel' : 'row-guide';
     const orgKey = c.org.replace(/\s/g,'');
+    const hasProfile = !!(c.quote || c.catchphrase);
     return `
-    <tr class="${rowCls}">
+    <tr class="${rowCls}${hasProfile ? ' has-profile' : ''}" data-name="${c.name}">
       <td><span class="grade-badge grade-${c.grade}">${c.grade}</span></td>
       <td class="text-main" style="font-weight:700;font-size:.92rem">${c.name}</td>
       <td><span class="org-tag org-${orgKey}">${ORG_LABEL[c.org]}</span></td>
@@ -446,6 +621,36 @@ document.getElementById('searchInput').addEventListener('input', e => {
   searchQ = e.target.value.trim();
   render();
 });
+const overlay  = document.getElementById('modalOverlay');
+const modalEl  = document.getElementById('modal');
+
+function openModal(c) {
+  document.getElementById('modalName').textContent = c.name;
+  document.getElementById('modalQuote').textContent = `"${c.quote}"`;
+  document.getElementById('modalCatchphrase').textContent = c.catchphrase;
+
+  const orgKey = c.org.replace(/\s/g,'');
+  document.getElementById('modalMeta').innerHTML = `
+    <span class="grade-badge grade-${c.grade}">${c.grade}</span>
+    <span class="org-tag org-${orgKey}" style="font-size:.72rem">${ORG_LABEL[c.org]}</span>
+    <span class="attr-dot attr-${c.attr}" style="font-size:.8rem">${c.attr}</span>
+  `;
+  modalEl.setAttribute('data-attr', c.attr);
+  overlay.classList.add('open');
+}
+
+document.getElementById('tableBody').addEventListener('click', e => {
+  const tr = e.target.closest('tr.has-profile');
+  if (!tr) return;
+  const name = tr.dataset.name;
+  const c = CHARACTERS.find(x => x.name === name);
+  if (c) openModal(c);
+});
+
+document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('open'); });
+
 
 render();
 </script>
